@@ -1,90 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { ItemsProvider, useItems } from './ItemsContext';
+import {
+  Container,
+  Typography,
+  TextField,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Stack,
+} from '@mui/material';
 
-function App() {
-  // State to store items
-  const [items, setItems] = useState([]);
-  // State for form fields
+function AppContent() {
+  const { items, addItem, updateItem, deleteItem } = useItems();
+
+  // Local state for form fields and editing
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  // State to track if editing
   const [editId, setEditId] = useState(null);
 
-  // Fetch items from backend on page load
-  useEffect(() => {
-    fetchItems();
-  }, []);
-
-  const fetchItems = async () => {
-    const res = await axios.get('http://localhost:3001/items');
-    setItems(res.data);
-  };
-
-  // Handle form submit for add or update
+  //IT will  add/update  on form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title) return alert('Title is required');
-    if (editId) {
-      // Update item
-      await axios.put(`http://localhost:3001/items/${editId}`, { title, description });
-    } else {
-      // For now, use user_id = 1 for demo
-     await axios.post('http://localhost:3001/items', { 
-  user_id: 1, // <-- This must match an existing user's ID
-  title, 
-  description 
-});
+    // Client-side validation
+    if (!title.trim()) {
+      alert('Title is required');
+      return;
     }
-    setTitle('');
-    setDescription('');
-    setEditId(null);
-    fetchItems();
+    if (title.length > 255) {
+      alert('Title must be less than 255 characters');
+      return;
+    }
+    if (description.length > 1000) {
+      alert('Description is too long');
+      return;
+    }
+
+    try {
+      if (editId) {
+        await updateItem(editId, { title, description });
+      } else {
+        await addItem({ user_id: 1, title, description });
+      }
+      setTitle('');
+      setDescription('');
+      setEditId(null);
+    } catch (err) {
+      alert('Error: ' + (err.response?.data?.error || err.message));
+    }
   };
 
-  // Handle delete
-  const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:3001/items/${id}`);
-    fetchItems();
-  };
-
-  // Handle edit
+  // Handle the  edit button
   const handleEdit = (item) => {
     setEditId(item.id);
     setTitle(item.title);
     setDescription(item.description);
   };
 
+  // Handle the  cancel edit
+  const handleCancel = () => {
+    setEditId(null);
+    setTitle('');
+    setDescription('');
+  };
+
   return (
-    <div className="App" style={{ maxWidth: 500, margin: 'auto', padding: 20 }}>
-      <h2>To-Do Items</h2>
-      <form onSubmit={handleSubmit} style={{ marginBottom: 20 }}>
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          style={{ width: '100%', marginBottom: 10 }}
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          style={{ width: '100%', marginBottom: 10 }}
-        />
-        <button type="submit">{editId ? 'Update' : 'Add'} Item</button>
-        {editId && <button type="button" onClick={() => { setEditId(null); setTitle(''); setDescription(''); }}>Cancel</button>}
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h4" align="center" gutterBottom>
+        To-Do App
+      </Typography>
+      <form onSubmit={handleSubmit}>
+        <Stack spacing={2}>
+          <TextField
+            label="Title"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            required
+            inputProps={{ maxLength: 255 }}
+          />
+          <TextField
+            label="Description"
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            inputProps={{ maxLength: 1000 }}
+          />
+          <Stack direction="row" spacing={2}>
+            <Button type="submit" variant="contained" color="primary">
+              {editId ? 'Update' : 'Add'}
+            </Button>
+            {editId && (
+              <Button
+                type="button"
+                variant="outlined"
+                color="secondary"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            )}
+          </Stack>
+        </Stack>
       </form>
-      <ul>
+      <List sx={{ mt: 4 }}>
         {items.map(item => (
-          <li key={item.id} style={{ marginBottom: 10 }}>
-            <b>{item.title}</b> - {item.description}
-            <button onClick={() => handleEdit(item)} style={{ marginLeft: 10 }}>Edit</button>
-            <button onClick={() => handleDelete(item.id)} style={{ marginLeft: 5 }}>Delete</button>
-          </li>
+          <ListItem
+            key={item.id}
+            secondaryAction={
+              <Stack direction="row" spacing={1}>
+                <Button size="small" onClick={() => handleEdit(item)}>
+                  Edit
+                </Button>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={() => deleteItem(item.id)}
+                >
+                  Delete
+                </Button>
+              </Stack>
+            }
+          >
+            <ListItemText
+              primary={item.title}
+              secondary={item.description}
+            />
+          </ListItem>
         ))}
-      </ul>
-    </div>
+      </List>
+    </Container>
+  );
+}
+
+function App() {
+  return (
+    <ItemsProvider>
+      <AppContent />
+    </ItemsProvider>
   );
 }
 
