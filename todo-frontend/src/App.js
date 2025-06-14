@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ItemsProvider, useItems } from './ItemsContext';
 import {
   Container,
@@ -10,10 +11,29 @@ import {
   ListItemText,
   Stack,
 } from '@mui/material';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+
+// ProtectedRoute component (can also be moved to a separate file)
+function ProtectedRoute({ children }) {
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) navigate('/login');
+    setLoading(false);
+  }, [navigate]);
+
+  if (loading) return <div>Loading...</div>;
+  
+  return children;
+}
 
 function AppContent() {
   const { items, addItem, updateItem, deleteItem } = useItems();
-
+  const navigate = useNavigate();
+  
   // Local state for form fields and editing
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -40,7 +60,7 @@ function AppContent() {
       if (editId) {
         await updateItem(editId, { title, description });
       } else {
-        await addItem({ user_id: 1, title, description });
+        await addItem({ title, description }); // user_id comes from backend via JWT
       }
       setTitle('');
       setDescription('');
@@ -62,13 +82,32 @@ function AppContent() {
     setEditId(null);
     setTitle('');
     setDescription('');
+
   };
+
+  const handleLogout = () => {
+  localStorage.removeItem('jwt_token');
+  navigate('/login');
+};
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Typography variant="h4" align="center" gutterBottom>
-        To-Do App
-      </Typography>
+     <Stack 
+        direction="row" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        sx={{ mb: 4 }}
+      >
+        <Typography variant="h4">To-Do App</Typography>
+        <Button 
+          variant="contained" 
+          color="error" 
+          onClick={handleLogout}
+          sx={{ textTransform: 'none' }}
+        >
+          Logout
+        </Button>
+      </Stack>
       <form onSubmit={handleSubmit}>
         <Stack spacing={2}>
           <TextField
@@ -97,7 +136,9 @@ function AppContent() {
               >
                 Cancel
               </Button>
+
             )}
+          
           </Stack>
         </Stack>
       </form>
@@ -133,9 +174,31 @@ function AppContent() {
 
 function App() {
   return (
-    <ItemsProvider>
-      <AppContent />
-    </ItemsProvider>
+    <BrowserRouter>
+      <Routes>
+      
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+       
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <ItemsProvider>
+                <AppContent />
+              </ItemsProvider>
+            </ProtectedRoute>
+          }
+        />
+
+        
+        <Route path="*" element={<Navigate to="/login" replace />} />
+
+
+        
+      </Routes>
+    </BrowserRouter>
   );
 }
 

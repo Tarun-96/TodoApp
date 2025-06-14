@@ -1,37 +1,43 @@
  import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import API from './axiosConfig';
+
 
 // Create the context
 const ItemsContext = createContext();
 
-// Provider component
+
 export const ItemsProvider = ({ children }) => {
   const [items, setItems] = useState([]);
 
-  // Fetch items from backend
+  
   const fetchItems = async () => {
-    const res = await axios.get('http://localhost:3001/items');
+    
+    const res = await API.get('/items');
     setItems(res.data);
   };
 
-  // Run fetchItems on mount
+  
   useEffect(() => {
     fetchItems();
   }, []);
 
   // Functions to add, update, delete items
   const addItem = async (item) => {
-    await axios.post('http://localhost:3001/items', item);
+   
+    await API.post('/items', item);
     fetchItems();
   };
 
   const updateItem = async (id, item) => {
-    await axios.put(`http://localhost:3001/items/${id}`, item);
+    
+    await API.put(`/items/${id}`, item);
     fetchItems();
   };
 
   const deleteItem = async (id) => {
-    await axios.delete(`http://localhost:3001/items/${id}`);
+    
+    await API.delete(`/items/${id}`);
     fetchItems();
   };
 
@@ -42,5 +48,5 @@ export const ItemsProvider = ({ children }) => {
   );
 };
 
-// Custom hook for easy use
+// Custom hook 
 export const useItems = () => useContext(ItemsContext);

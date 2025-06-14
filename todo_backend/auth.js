@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
   try {
     const userRes = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (userRes.rows.length === 0)
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ error: 'User not registered ' });
 
     const user = userRes.rows[0];
     const valid = await bcrypt.compare(password, user.password);
