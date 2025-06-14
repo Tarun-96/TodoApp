@@ -1,64 +1,86 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Avatar, Button, TextField, Typography, Alert } from '@mui/material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import axios from 'axios';
-import { Link , useNavigate} from 'react-router-dom';
-import API from '../axiosConfig'; 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './Login.css';
 
-function Login({ onLogin }) {
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
+function Login() {
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setCredentials({
-      ...credentials,
-      [e.target.name]: e.target.value
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      // const res = await axios.post('http://localhost:3001/auth/login', credentials);
-      const res = await API.post('/auth/login', credentials); 
+      const res = await axios.post('http://localhost:3001/auth/login', form);
       localStorage.setItem('jwt_token', res.data.token);
-      onLogin && onLogin(res.data.user);
-      navigate("/");
+      toast.success('Login successful!', { autoClose: 1500 });
+      setTimeout(() => navigate('/'), 1600);
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: 'auto', padding: 20 }}>
-      <h2>Login</h2>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={credentials.email}
-        onChange={handleChange}
-        required
-        style={{ display: 'block', width: '100%', marginBottom: 10 }}
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={credentials.password}
-        onChange={handleChange}
-        required
-        style={{ display: 'block', width: '100%', marginBottom: 10 }}
-      />
-      <button type="submit">Login</button>
-      <div style={{ marginTop: 10 }}>
-        Don't have an account?{' '}
-        <Link to="/signup">
-          <button type="button">Sign Up</button>
-        </Link>
+    <div className="auth-container">
+      <ToastContainer />
+      <div className="auth-paper">
+        <Avatar className="auth-avatar">
+          <LockOutlinedIcon />
+        </Avatar>
+        <Typography component="h1" variant="h5" className="auth-title">
+          Login
+        </Typography>
+        {error && <Alert severity="error" style={{ width: '100%' }}>{error}</Alert>}
+        <form className="auth-form" noValidate onSubmit={handleSubmit}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="Email Address"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            autoComplete="email"
+            autoFocus
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            value={form.password}
+            onChange={handleChange}
+            autoComplete="current-password"
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            style={{ marginTop: 24, marginBottom: 8 }}
+          >
+            Login
+          </Button>
+          <div className="auth-link">
+            <Link to="/signup">
+              <Button variant="text">Don't have an account? Sign Up</Button>
+            </Link>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
 

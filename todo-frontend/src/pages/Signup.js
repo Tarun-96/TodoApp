@@ -1,75 +1,99 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Avatar, Button, TextField, Typography, Alert } from '@mui/material';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './Signup.css';
 
-function Signup({ onSignup }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
-
+function Signup() {
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
+      setError('All fields are required');
+      return;
+    }
     try {
-    //   const res = await axios.post('http://localhost:3001/auth/signup', formData);
-     
-      const loginRes = await axios.post('http://localhost:3001/auth/login', { email: formData.email, password: formData.password });
-      localStorage.setItem('jwt_token', loginRes.data.token);
-      onSignup && onSignup(loginRes.data.user);
-      navigate("/login");
-      alert('Signup successful! Please log in.');
-      
+      await axios.post('http://localhost:3001/auth/signup', form);
+      toast.success('Signup successful! Redirecting to login...', { autoClose: 1500 });
+      setTimeout(() => navigate('/login'), 1600);
     } catch (err) {
       setError(err.response?.data?.error || 'Signup failed');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: 'auto', padding: 20 }}>
-      <h2>Sign Up</h2>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      <input
-        type="text"
-        name="name"
-        placeholder="Name"
-        value={formData.name}
-        onChange={handleChange}
-        required
-        style={{ display: 'block', width: '100%', marginBottom: 10 }}
-      />
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={handleChange}
-        required
-        style={{ display: 'block', width: '100%', marginBottom: 10 }}
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        value={formData.password}
-        onChange={handleChange}
-        required
-        style={{ display: 'block', width: '100%', marginBottom: 10 }}
-      />
-      <button type="submit">Sign Up</button>
-    </form>
+    <div className="auth-container">
+      <ToastContainer />
+      <div className="auth-paper">
+        <Avatar className="auth-avatar">
+          <PersonAddAltIcon />
+        </Avatar>
+        <Typography component="h1" variant="h5" className="auth-title">
+          Sign Up
+        </Typography>
+        {error && <Alert severity="error" style={{ width: '100%' }}>{error}</Alert>}
+        <form className="auth-form" noValidate onSubmit={handleSubmit}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="name"
+            label="Name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            autoFocus
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="email"
+            label="Email Address"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            autoComplete="email"
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            value={form.password}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            style={{ marginTop: 24, marginBottom: 8 }}
+          >
+            Sign Up
+          </Button>
+          <div className="auth-link">
+            <Link to="/login">
+              <Button variant="text">Already have an account? Login</Button>
+            </Link>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
