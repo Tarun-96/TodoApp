@@ -10,9 +10,6 @@ API.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  if (process.env.REACT_APP_ENABLE_LOGGING === 'true') {
-    console.log('API Request:', config);
-  }
   return config;
 });
 
