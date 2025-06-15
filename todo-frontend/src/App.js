@@ -13,8 +13,9 @@ import {
 } from '@mui/material';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import './App.css';
 
-// ProtectedRoute component (can also be moved to a separate file)
+// ProtectedRoute component
 function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -26,23 +27,30 @@ function ProtectedRoute({ children }) {
   }, [navigate]);
 
   if (loading) return <div>Loading...</div>;
-  
+
   return children;
 }
 
 function AppContent() {
   const { items, addItem, updateItem, deleteItem } = useItems();
   const navigate = useNavigate();
-  
-  // Local state for form fields and editing
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [editId, setEditId] = useState(null);
 
-  //IT will  add/update  on form submit
+  // New state to track which descriptions are expanded
+  const [expandedIds, setExpandedIds] = useState([]);
+
+  const toggleExpand = (id) => {
+    setExpandedIds(prev =>
+      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Client-side validation
+
     if (!title.trim()) {
       alert('Title is required');
       return;
@@ -60,7 +68,7 @@ function AppContent() {
       if (editId) {
         await updateItem(editId, { title, description });
       } else {
-        await addItem({ title, description }); // user_id comes from backend via JWT
+        await addItem({ title, description });
       }
       setTitle('');
       setDescription('');
@@ -70,44 +78,42 @@ function AppContent() {
     }
   };
 
-  // Handle the  edit button
   const handleEdit = (item) => {
     setEditId(item.id);
     setTitle(item.title);
     setDescription(item.description);
   };
 
-  // Handle the  cancel edit
   const handleCancel = () => {
     setEditId(null);
     setTitle('');
     setDescription('');
-
   };
 
   const handleLogout = () => {
-  localStorage.removeItem('jwt_token');
-  navigate('/login');
-};
+    localStorage.removeItem('jwt_token');
+    navigate('/login');
+  };
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
-     <Stack 
-        direction="row" 
-        justifyContent="space-between" 
-        alignItems="center" 
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         sx={{ mb: 4 }}
       >
         <Typography variant="h4">To-Do App</Typography>
-        <Button 
-          variant="contained" 
-          color="error" 
+        <Button
+          variant="contained"
+          color="error"
           onClick={handleLogout}
           sx={{ textTransform: 'none' }}
         >
           Logout
         </Button>
       </Stack>
+
       <form onSubmit={handleSubmit}>
         <Stack spacing={2}>
           <TextField
@@ -136,35 +142,72 @@ function AppContent() {
               >
                 Cancel
               </Button>
-
             )}
-          
           </Stack>
         </Stack>
       </form>
+
       <List sx={{ mt: 4 }}>
         {items.map(item => (
           <ListItem
             key={item.id}
-            secondaryAction={
-              <Stack direction="row" spacing={1}>
-                <Button size="small" onClick={() => handleEdit(item)}>
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={() => deleteItem(item.id)}
-                >
-                  Delete
-                </Button>
-              </Stack>
-            }
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between', // Space out text and buttons
+              alignItems: 'flex-start', // Align text to the top
+              paddingRight: '16px', // Add some space to avoid overlap with buttons
+            }}
           >
             <ListItemText
               primary={item.title}
-              secondary={item.description}
+              secondary={
+                (() => {
+                  const wordCount = item.description.trim().split(/\s+/).length;
+                  const isExpanded = expandedIds.includes(item.id);
+                  const shouldShowToggle = wordCount > 10;
+
+                  const displayedText = isExpanded || !shouldShowToggle
+                    ? item.description
+                    : item.description.split(/\s+/).slice(0, 10).join(' ') + '...';
+
+                  return (
+                    <>
+                      <span style={{ wordWrap: 'break-word' }}>{displayedText}</span>
+                      {shouldShowToggle && (
+                        <Button
+                          size="small"
+                          onClick={() => toggleExpand(item.id)}
+                          sx={{
+                            ml: 1,
+                            textTransform: 'none',
+                            fontSize: '0.75rem',
+                            display: 'inline-block',
+                          }}
+                        >
+                          {isExpanded ? 'Show Less' : 'Read More'}
+                        </Button>
+                      )}
+                    </>
+                  );
+                })()
+              }
+              sx={{
+                flexGrow: 1, // Make the text area take available space
+                overflowWrap: 'break-word', // Prevent overflow if the text is long
+              }}
             />
+            <Stack direction="row" spacing={1}>
+              <Button size="small" onClick={() => handleEdit(item)}>
+                Edit
+              </Button>
+              <Button
+                size="small"
+                color="error"
+                onClick={() => deleteItem(item.id)}
+              >
+                Delete
+              </Button>
+            </Stack>
           </ListItem>
         ))}
       </List>
@@ -176,11 +219,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-      
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
-       
         <Route
           path="/"
           element={
@@ -191,12 +231,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        
         <Route path="*" element={<Navigate to="/login" replace />} />
-
-
-        
       </Routes>
     </BrowserRouter>
   );
