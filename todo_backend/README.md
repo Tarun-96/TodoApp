@@ -285,19 +285,24 @@ Authorization: Bearer <jwt_token>
 
 ```
 todo-backend/
-├── routes/                    # API route handlers
-│   ├── auth.js               # Authentication endpoints
-│   └── items.js              # Todo CRUD endpoints
-├── middleware/               # Custom middleware functions
-│   └── authMiddleware.js     # JWT verification middleware
-├── config/                   # Configuration modules
-│   └── db.js                # Database connection setup
-├── app.js                   # Main Express application
-├── .env                     # Environment variables (not in repo)
-├── .env.example            # Environment template
-├── .gitignore              # Git ignore patterns
-├── package.json            # Dependencies and scripts
-└── README.md               # This documentation
+├── src/                                 # Source code for the backend app
+│   ├── config/                          # Configuration files
+│   │   └── db.js                        # Database connection logic 
+│   │
+│   ├── middleware/                      # Custom Express middleware
+│   │   └── authMiddleware.js            # Middleware to verify JWT for protected routes
+│   │
+│   ├── routes/                          # API route definitions
+│   │   ├── auth.js                      # Routes for user auth (login/signup)
+│   │   └── items.js                     # Routes for CRUD operations on todo items
+│
+├── app.js                               # Main Express server file (entry point)
+├── .env                                 # Environment variables (should NOT be committed)
+├── .env.example                         # Sample env file for reference
+├── .gitignore                           # Specifies which files/folders to ignore in Git
+├── package.json                         # Node dependencies, scripts, and metadata
+└── README.md                            # Project documentation
+
 ```
 
 ### File Descriptions
