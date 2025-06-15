@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { ItemsProvider, useItems } from './ItemsContext';
+import { ItemsProvider, useItems } from './context/ItemsContext'
 import {
   Container,
   Typography,
